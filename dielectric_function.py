@@ -1,10 +1,9 @@
-
-
 import numpy as np
 import scipy.optimize as opt
 import matplotlib.pyplot as plt
 from scipy import integrate
-
+from scipy.interpolate import interp1d  # Import interpolation function
+import pandas as pd
 
 # Define the models
 MODELS = {
@@ -35,7 +34,6 @@ MODELS = {
                      lambda eV, Amp, En, Br, Eg, Ep, Et, Eu: (Et*(((eV-Eg)**2)/((eV-Eg)**2+Ep**2)) * (Amp*En*Br*eV)/((eV**2-En**2)**2+Br**2*eV**2)/eV) * np.exp((eV-Eg-Et)/Eu)]
     }
 }
-
 
 def calcFunction(dielectricFunction):
     eV = np.linspace(dielectricFunction['spectral range'][0], dielectricFunction['spectral range'][1], 100)
@@ -71,7 +69,6 @@ def calcFunction(dielectricFunction):
    
     return e1, e2, dielectricFunction, eV
 
-
 def KKR(e2, eV):
     E = eV
     e1 = np.zeros(len(eV))
@@ -82,20 +79,26 @@ def KKR(e2, eV):
         e1[i] = 1 + (2 / np.pi) * (e1_part1 + e1_part2) * (E[3] - E[2])
     return e1
 
+# Load the observed spectrum
+observed_wavelengths = np.loadtxt('observed_spectrum.csv', delimiter=',', usecols=0)
+observed_spectrum = np.loadtxt('observed_spectrum.csv', delimiter=',')
 
 # Example function to fit the observed reflection spectrum
-def fit_reflection_spectrum(dielectricFunction, observed_spectrum):
+def fit_reflection_spectrum(dielectricFunction, observed_wavelengths, observed_spectrum):
     def error_function(params):
         dielectricFunction['oscillators'][0]['values'] = params
         _, _, _, eV = calcFunction(dielectricFunction)
-        calculated_spectrum = dielectricFunction['n']  # Assuming the reflection spectrum can be represented by n
-        return np.sum((observed_spectrum - calculated_spectrum)**2)
+        
+        # Interpolate observed_spectrum to the eV values of the calculated_spectrum
+        interp_func = interp1d(observed_wavelengths, observed_spectrum, kind='linear', fill_value='extrapolate')
+        interpolated_spectrum = interp_func(dielectricFunction['wvl'])
 
+        calculated_spectrum = dielectricFunction['n']  # Assuming the reflection spectrum can be represented by n
+        return np.sum((interpolated_spectrum - calculated_spectrum)**2)
 
     initial_params = dielectricFunction['oscillators'][0]['values']
     result = opt.minimize(error_function, initial_params, method='Nelder-Mead')
     return result.x
-
 
 # Sample dielectric function structure
 dielectricFunction = {
@@ -106,51 +109,31 @@ dielectricFunction = {
     ]
 }
 
-
-# Sample observed spectrum (replace with actual observed data)
-observed_spectrum = np.random.rand(100)
-
-
 # Fit the reflection spectrum
-fitted_params = fit_reflection_spectrum(dielectricFunction, observed_spectrum)
+fitted_params = fit_reflection_spectrum(dielectricFunction, observed_wavelengths, observed_spectrum)
 dielectricFunction['oscillators'][0]['values'] = fitted_params
-
 
 # Calculate the final fitted function
 e1, e2, dielectricFunction, eV = calcFunction(dielectricFunction)
 
 
+# Interpolate observed_spectrum to the eV values of the calculated_spectrum
+interp_func = interp1d(observed_wavelengths, observed_spectrum, kind='linear', fill_value='extrapolate')
+interpolated_spectrum = interp_func(dielectricFunction['wvl'])
+
 # Plotting the results
-plt.plot(eV, observed_spectrum, label='Observed Spectrum')
-plt.plot(eV, dielectricFunction['n'], label='Fitted Spectrum')
-plt.xlabel('Energy (eV)')
+plt.plot(dielectricFunction['wvl'], interpolated_spectrum, label='Observed Spectrum')
+plt.plot(dielectricFunction['wvl'], dielectricFunction['n'], label='Fitted Spectrum')
+plt.xlabel('Wavelength')
 plt.ylabel('Reflection Spectrum')
 plt.legend()
 plt.show()
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Plotting the results
+plt.plot(eV, observed_spectrum, label='Observed Spectrum')
+plt.plot(eV, dielectricFunction['n'], label='Fitted Spectrum')
+plt.xlabel('Wavelength')
+plt.ylabel('Reflection Spectrum')
+plt.legend()
+plt.show()
