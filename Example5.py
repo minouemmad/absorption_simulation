@@ -10,12 +10,11 @@ x_microns = linspace(0, 10, nlamb)  # from 0 to 10 microns
 x = x_microns * 1e3  # convert to nm for calculations
 
 # Define layers for metal structure (Titanium, Platinum, Gold)
-layers_TiPtAu = [
-    [nan, 'Constant', [1.0, 0.0]],  # Air
-    [50, 'Sellmeier', [2.5, 1.5e4, 0.1]],  # Titanium layer (thickness 50 nm) - hypothetical Sellmeier coefficients
-    [30, 'Sellmeier', [2.9, 1.2e4, 0.2]],  # Platinum layer (thickness 30 nm) - hypothetical Sellmeier coefficients
-    [20, 'Sellmeier', [3.1, 1.1e4, 0.3]],  # Gold layer (thickness 20 nm) - hypothetical Sellmeier coefficients
-    [nan, 'Constant', [1.0, 0.0]]  # Substrate (assumed to be air for simplicity)
+layers_metal = [
+    [20, 'Drude', [451.588, 1.762, 1.943]],  # Titanium layer (thickness 50 nm) - hypothetical Sellmeier coefficients
+    [20, 'Drude', [594.0646, 8.517, 9.249]],  # Platinum layer (thickness 30 nm) - hypothetical Sellmeier coefficients
+    [100, 'Drude', [559.3747, 2.214, 13.32]],  # Gold layer (thickness 20 nm) - hypothetical Sellmeier coefficients
+
 ]
 
 
@@ -32,7 +31,7 @@ layers_semiconductor = [
 incang = 10 * pi / 180 * ones(x.size)
 
 # Calculate RTA for metal structure
-[rs_metal, rp_metal, Ts_metal, Tp_metal] = calc_rsrpTsTp(incang, layers_TiPtAu, x)
+[rs_metal, rp_metal, Ts_metal, Tp_metal] = calc_rsrpTsTp(incang, layers_metal, x)
 Rs_metal = (abs(rs_metal)) ** 2
 Rp_metal = (abs(rp_metal)) ** 2
 Ts_metal = Ts_metal
@@ -64,7 +63,7 @@ figure()
 plot(x_microns, Ts_metal, 'k', label='Transmittance - Ti/Pt/Au')
 plot(x_microns, Tp_metal, 'r', label='Transmittance (p-pol) - Ti/Pt/Au')
 plot(x_microns, Ts_semiconductor, 'b', label='Transmittance - GaSb/AlSbAs/GaSb')
-plot(x_microns, Tp_semiconductor, 'g', label='Transmittance (p-pol) - Semiconductor')
+plot(x_microns, Tp_semiconductor, 'g', label='Transmittance (p-pol) - GaSb/AlSbAs/GaSb')
 xlabel('Wavelength (microns)')
 ylabel('Transmittance Coefficient')
 title('Transmittance vs Wavelength')

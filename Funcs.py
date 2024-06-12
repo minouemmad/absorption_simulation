@@ -4,9 +4,6 @@ NNN = []
 from numpy import *
 from Lorentz_Drude_funcs import LD   # import from "Lorentz_Drude_funcs.py"
 
-# Given the structure ‘layers’ and the array of wavelengths ‘x’, the set of refractive index values ‘Nlay’ corresponding to the layer with number 
-# ‘num_lay’ is obtained by calling the following function, where the materials are identified by their dispersive characteristics by means of a 
-# keyword, as explained in the main text
 def calc_Nlayer(layers,x,num_lay):
     case = layers[num_lay][1]
     if case == 'Constant':
@@ -83,9 +80,6 @@ def calc_Nlayer(layers,x,num_lay):
         Nlay=nnn-1j*0.0
     return Nlay
  
-# Given the structure ‘layers’ and the array of wavelengths ‘x’, the set of refractive index values ‘Nlay’ corresponding to the layer with number 
-# ‘num_lay’ is obtained by calling the following function, where the materials are identified by their dispersive characteristics by means of a 
-# keyword, as explained in the main text
 def calc_rsrpTsTp(incang,layers,x):
     Ms=zeros([x.size,2,2],dtype=cfloat); Mp=zeros([x.size,2,2],dtype=cfloat)
     S=zeros([x.size,2,2],dtype=cfloat); P=zeros([x.size,2,2],dtype=cfloat)
