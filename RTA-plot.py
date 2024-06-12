@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 import csv
 
 # Define the paths to your CSV files
-reflection_csv = 'TiPtAu REFLECTION 2-16-24.CSV'
-gold_reflection_csv = 'GOLD REFLECTION 2-16-24.CSV'
-transmission_csv = 'TiPtAu TRANSMISSION 2-16-24.CSV'  # New transmission file
+reflection_csv = 'data/TiPtAu REFLECTION 2-16-24.CSV'
+gold_reflection_csv = 'data/GOLD REFLECTION 2-16-24.CSV'
+transmission_csv = 'data/TiPtAu TRANSMISSION 2-16-24.CSV'  # New transmission file
 
 # Customizable axis labels
 x_axis_label = 'Wavelength (µm)'
