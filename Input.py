@@ -3,7 +3,7 @@ from tkinter import ttk, messagebox
 import numpy as np
 import matplotlib.pyplot as plt
 from Funcs import calc_rsrpTsTp
-from Lorentz_Drude_funcs import LD
+from LD import *
 
 class LayerInput:
     def __init__(self, parent):

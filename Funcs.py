@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 NNN = []
 from numpy import *
-from Lorentz_Drude_funcs import LD   # import from "Lorentz_Drude_funcs.py"
+from LD import *   # import from "Lorentz_Drude_funcs.py"
 
 def calc_Nlayer(layers,x,num_lay):
     case = layers[num_lay][1]
