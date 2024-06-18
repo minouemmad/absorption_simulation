@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # example of how to use ldbb.py
 
-from ldbb.ldbb import LDBB
+from ldbb import LDBB
 from numpy import *
 import matplotlib.pyplot as plt
 

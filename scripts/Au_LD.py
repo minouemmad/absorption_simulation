@@ -88,3 +88,6 @@ plt.ylabel('n, k')
 plt.xscale('log')
 plt.yscale('log')
 plt.legend(bbox_to_anchor=(0,1.02,1,0),loc=3,ncol=2,borderaxespad=0)
+
+
+plt.show()

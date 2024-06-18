@@ -2,7 +2,7 @@
 #!/usr/bin/python
 # example of how to use ldbb.py - text version
 
-from ldbb.ldbb import LDBB
+from ldbb import LDBB
 from numpy import *
 
 # wavelength range of interest (in meters) and number of points
@@ -11,7 +11,8 @@ epsD = LDBB('Au','D',lambda0)
 epsLD = LDBB('Au','LD',lambda0)
 epsBB = LDBB('Ti','BB',lambda0)
 
-
+# scale wavelength for plot
+lambda0 = lambda0*1e6
 # LDBB returns permittivity, but we can easily convert it to refractive index
 for l,e in zip(lambda0,epsBB):
     print(l*1e6, real(sqrt(e)), imag(sqrt(e)))

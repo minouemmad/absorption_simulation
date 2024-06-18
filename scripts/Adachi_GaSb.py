@@ -141,3 +141,5 @@ plt.yscale('log')
 plt.ylim([1e3,1e7])
 plt.xlabel('Photon energy (eV)')
 plt.ylabel('α (1/cm)')
+
+plt.show()

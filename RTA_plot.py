@@ -46,10 +46,10 @@ normalized_transmission = [
 
 # Determine y-axis limits based on the data
 all_data = normalized_reflection + normalized_transmission
-y_min = -1.0  # Set the minimum y-axis value
-y_max = 2.0  # Set the maximum y-axis value
-x_max = 10.0  # Set the maximum x-axis value
-x_min = 2.0  # Set the minimum x-axis value
+y_min = 0  # Set the minimum y-axis value
+y_max = 1.0  # Set the maximum y-axis value
+x_max = 6.0  # Set the maximum x-axis value
+x_min = 2.5  # Set the minimum x-axis value
 
 # Create the plot
 plt.figure(figsize=(10, 6))  # Set the figure size
