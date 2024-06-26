@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 NNN = []
 from numpy import *
-from LD import *   # import from "Lorentz_Drude_funcs.py"
+import LD   # import from "Lorentz_Drude_funcs.py"
 
 def calc_Nlayer(layers,x,num_lay):
     case = layers[num_lay][1]
@@ -81,11 +81,11 @@ def calc_Nlayer(layers,x,num_lay):
     return Nlay
  
 def calc_rsrpTsTp(incang,layers,x):
-    Ms=zeros([x.size,2,2],dtype=cfloat); Mp=zeros([x.size,2,2],dtype=cfloat)
-    S=zeros([x.size,2,2],dtype=cfloat); P=zeros([x.size,2,2],dtype=cfloat)
+    Ms=zeros([x.size,2,2],dtype=complex); Mp=zeros([x.size,2,2],dtype=complex)
+    S=zeros([x.size,2,2],dtype=complex); P=zeros([x.size,2,2],dtype=complex)
     Ms[:,0,0]=1; Ms[:,1,1]=1; Mp[:,0,0]=1; Mp[:,1,1]=1
-    rs=zeros((x.size),dtype=cfloat); rp=zeros((x.size),dtype=cfloat)
-    Ts=zeros((x.size),dtype=cfloat); Tp=zeros((x.size),dtype=cfloat);
+    rs=zeros((x.size),dtype=complex); rp=zeros((x.size),dtype=complex)
+    Ts=zeros((x.size),dtype=complex); Tp=zeros((x.size),dtype=complex);
     im=0
     N0=calc_Nlayer(layers,x,im)
     N0s=N0*cos(incang); N0p=N0/cos(incang)
@@ -98,9 +98,9 @@ def calc_rsrpTsTp(incang,layers,x):
         Np=Nlay**2/Ns
         for ix in range(x.size):
             S[ix,:,:]=[[cos(Dr[ix]), 1j/Ns[ix]*sin(Dr[ix])],
-                [1j*Ns[ix]*sin(Dr[ix]), cos(Dr[ix])]];
+                [1j*Ns[ix]*sin(Dr[ix]), cos(Dr[ix])]]
             P[ix,:,:]=[[cos(Dr[ix]), 1j/Np[ix]*sin(Dr[ix])],
-                [1j*Np[ix]*sin(Dr[ix]), cos(Dr[ix])]];
+                [1j*Np[ix]*sin(Dr[ix]), cos(Dr[ix])]]
             Ms[ix,:,:]=Ms[ix,:,:]@S[ix,:,:]; Mp[ix,:,:]=Mp[ix,:,:]@P[ix,:,:]
     im=len(layers)-1
     Nm=calc_Nlayer(layers,x,im)
