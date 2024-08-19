@@ -4,53 +4,48 @@ from matplotlib.pyplot import *
 import Funcs as MF  # import transfer-matrix method (may have to change)
 import matplotlib.pyplot as plt
 
-# RI of material (shouldn't they depend on wavelength?)
+# Refractive indices of materials (assumed constant for simplicity)
 GaSb_n = 3.816
 Au_n = 6.8         # @ 7 microns k = 41.6, "Refractive index of optical materials in IR region" A.J. Moses, pg. 8-15  
 GaAs_n = 3.9476
 AlAsSb_n = 3.101
 
+# Refractive indices for GaSb and AlAsSb layers (constant approximation)
 GaSb_ln = [3.816, 0.]
 AlAsSb_ln = [3.101, 0.]
 
-d_des = 7800 
+d_des = 7800  # Not used in current script
 
-# Sellmeier Coefficients: 
-GaSb_sn = [14.10, 0.442, 1503e-9]      # J. Appl. Phys. 84, 4517–4524 (1998) https://doi.org/10.1063/1.368677
-AlAsSb_sn = [8.82, 0.79, 589e-9]     #  Journal of Applied Physics 94, 5041 (2003); doi: 10.1063/1.1611290
+# Sellmeier coefficients for refractive index dispersion (not used in current script)
+GaSb_sn = [14.10, 0.442, 1503e-9]  # J. Appl. Phys. 84, 4517–4524 (1998) https://doi.org/10.1063/1.368677
+AlAsSb_sn = [8.82, 0.79, 589e-9]   # Journal of Applied Physics 94, 5041 (2003); doi: 10.1063/1.1611290
 
-# Layers = [ [thickness, type of formula, [five parameters for formula] ] ]
+# Layer definitions: [thickness (nm), type of formula, [parameters for formula]]
 L_amb = [[nan, "Constant", [1., 0.]]]
+L_Au = [[100, "Constant", [0.55, 20.43]]]  # Gold layer
+L_Ti = [[20, "Constant", [4.56, 5.96]]]    # Titanium layer
+L_Au_LD = [[100, "Lorentz-Drude", ['Au']]]  # Lorentz-Drude model for gold
 
-L_Au = [[100, "Constant", [0.55, 20.43]]]     # (@ 3um) Babar and Weaver 2015: n,k 0.2066–12.40 µm
-L_Ti = [[20, "Constant", [4.56, 5.96]]]     # (@ 3um) Rakić et al. 1998: Lorentz-Drude model 
-L_Au_LD = [[100, "Lorentz-Drude", ['Au']]]
+# Define a 12-period DBR stack of alternating GaSb and AlAsSb layers
+L_1262_cav = 12 * [[201., "Constant", GaSb_ln], [239., "Constant", AlAsSb_ln]]
 
-L_1262_cav =  12 * [[201., "Constant", GaSb_ln],
-                    [239., "Constant", AlAsSb_ln]]
+L_AntiR = [[3000 / (4 * sqrt(3.81)), "Constant", [1.95, 0.0]]]  # Anti-reflective layer
+L_1262_sub = [[nan, "Constant", GaSb_ln]]  # Substrate layer
 
-L_AntiR = [[3000 / (4 * sqrt(3.81)), "Constant", [1.95, 0.0]]]
-L_1262_sub =  [[nan, "Constant", GaSb_ln]]
-
-Ls_1262 =  L_amb + L_1262_cav + L_1262_sub
-
+# Layer stacks for different configurations
+Ls_1262 = L_amb + L_1262_cav + L_1262_sub
 Ls_1262_metal = L_amb + L_Au_LD + [[239., "Constant", AlAsSb_ln]] + L_1262_cav + L_1262_sub
 Ls_1262_metal = Ls_1262_metal[::-1]
 
-# Define new layer stack: AlSbAs, GaSb, AlSbAs, GaSb
+# Substrate
 Ls_new = (L_amb + 
-          [[201., "Constant", GaSb_ln]] +
-          [[239., "Constant", AlAsSb_ln]] +
-          [[201., "Constant", GaSb_ln]] +
-          [[239., "Constant", AlAsSb_ln]] +
-          [[201., "Constant", GaSb_ln]] +
           L_1262_sub)
 Ls_new = Ls_new[::-1]
 
 # Insert function parameters
 nlamb = 3500
-x = linspace(500, 7000, nlamb)
-incang = 0 * pi / 180 * ones(x.size)
+x = linspace(500, 7000, nlamb)  # Wavelength range for calculation
+incang = 0 * pi / 180 * ones(x.size)  # Incident angle (normal incidence)
 
 # Calculate reflectance for the original stack
 [rs, rp, Ts, Tp] = MF.calc_rsrpTsTp(incang, Ls_1262_metal, x)
@@ -79,7 +74,7 @@ ax1.legend()
 ax1.grid(alpha=0.2)
 
 # Plot for the new stack
-ax2.plot(x, R0_new, label='$AlSbAs-GaSb-AlSbAs-GaSb\ Stack$', color='orange')
+ax2.plot(x, R0_new, label='$GaSb$', color='orange')
 ax2.set_xlabel('wavelength (nm)', size=14)
 ax2.set_ylabel('Reflectance', size=14)
 ax2.set_title('Substrate', size=16)
