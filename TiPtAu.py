@@ -24,7 +24,9 @@ AlAsSb_sn = [8.82, 0.79, 589e-9]   # Journal of Applied Physics 94, 5041 (2003);
 L_amb = [[nan, "Constant", [1., 0.]]]
 L_Au = [[100, "Constant", [0.55, 20.43]]]  # Gold layer
 L_Ti = [[20, "Constant", [4.56, 5.96]]]    # Titanium layer
-L_Au_LD = [[100, "Lorentz-Drude", ['Au']]]  # Lorentz-Drude model for gold
+L_Au_LD = [[100, "Lorentz-Drude", ['Au']]]  # Lorentz-Drude model for Au
+L_Ti_LD = [[100, "Lorentz-Drude", ['Ti']]]  # Lorentz-Drude model for Ti
+L_Pt_LD = [[100, "Lorentz-Drude", ['Ti']]]  # Lorentz-Drude model for Pt
 
 # Define a 12-period DBR stack of alternating GaSb and AlAsSb layers
 L_1262_cav = 12 * [[201., "Constant", GaSb_ln], [239., "Constant", AlAsSb_ln]]
@@ -34,7 +36,7 @@ L_1262_sub = [[nan, "Constant", GaSb_ln]]  # Substrate layer
 
 # Layer stacks for different configurations
 Ls_1262 = L_amb + L_1262_cav + L_1262_sub
-Ls_1262_metal = L_amb + L_Au_LD + [[239., "Constant", AlAsSb_ln]] + L_1262_cav + L_1262_sub
+Ls_1262_metal = L_amb + L_Au_LD + L_Pt_LD + L_Ti_LD + [[239., "Constant", AlAsSb_ln]] + L_1262_cav + L_1262_sub
 Ls_1262_metal = Ls_1262_metal[::-1]
 
 # Substrate
@@ -44,7 +46,8 @@ Ls_new = Ls_new[::-1]
 
 # Insert function parameters
 nlamb = 3500
-x = linspace(500, 7000, nlamb)  # Wavelength range for calculation
+x = linspace(2.5, 15, nlamb) * 1000  # Wavelength range for calculation in nm (2.5 to 15 microns)
+
 incang = 0 * pi / 180 * ones(x.size)  # Incident angle (normal incidence)
 
 # Calculate reflectance for the original stack
@@ -54,32 +57,17 @@ R_1 = 0.33 + 0.67 * R0
 T0 = real(Ts)
 Abs1 = 1. - R0 - T0
 
-# Calculate reflectance for the new stack
-[rs_new, rp_new, Ts_new, Tp_new] = MF.calc_rsrpTsTp(incang, Ls_new, x)
-R0_new = (abs(rs_new))**2
-R_1_new = 0.33 + 0.67 * R0_new
-T0_new = real(Ts_new)
-Abs1_new = 1. - R0_new - T0_new
-
 #### Initialize plot ####
 
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
+fig, ax1 = plt.subplots(figsize=(10, 5))
 
 # Plot for the original stack
-ax1.plot(x, R0, label='$Original\ Stack$')
-ax1.set_xlabel('wavelength (nm)', size=14)
+ax1.plot(x / 1000, R0, label='$TiPtAu$')  # Convert x to microns for the plot
+ax1.set_xlabel('Wavelength (μm)', size=14)
 ax1.set_ylabel('Reflectance', size=14)
-ax1.set_title('Semi-infinite Sub.(Gold Layer)', size=16)
+ax1.set_title('Semi-infinite Sub.(TiPtAu)', size=16)
 ax1.legend()
 ax1.grid(alpha=0.2)
-
-# Plot for the new stack
-ax2.plot(x, R0_new, label='$GaSb$', color='orange')
-ax2.set_xlabel('wavelength (nm)', size=14)
-ax2.set_ylabel('Reflectance', size=14)
-ax2.set_title('Substrate', size=16)
-ax2.legend()
-ax2.grid(alpha=0.2)
 
 plt.tight_layout()
 plt.show()
