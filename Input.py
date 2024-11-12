@@ -1,123 +1,147 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from matplotlib import pyplot as plt
 import numpy as np
-import matplotlib.pyplot as plt
-from Funcs import calc_rsrpTsTp
-from LD import *
+import json
+import Funcs as MF  # Assuming this is the transfer matrix function module
 
-class LayerInput:
-    def __init__(self, parent):
-        self.frame = ttk.Frame(parent)
-        self.frame.pack(fill=tk.BOTH, expand=True)
-        self.layer_list = []
+# Constants for the refractive indices of materials
+GaSb_ln = [3.816, 0.0]
+AlAsSb_ln = [3.101, 0.0]
+GaAs_ln = [3.6, 0.0]  # Placeholder value for GaAs
 
-        self.material_var = tk.StringVar()
-        self.thickness_var = tk.StringVar()
-        self.repeat_var = tk.StringVar()
+# Load previous settings if they exist
+def load_settings():
+    try:
+        with open("user_settings.json", "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {"dbr_layers": [], "dbr_period": 1, "metal_layers": [], "substrate": "GaSb"}
 
-        self.materials = ["Ag", "Al", "Au", "Cu", "Cr", "Ni", "W", "Ti", "Be", "Pd", "Pt"]
+# Save settings to a JSON file
+def save_settings():
+    settings = {
+        "dbr_layers": dbr_layers,
+        "dbr_period": int(dbr_period_entry.get()),
+        "metal_layers": metal_layers,
+        "substrate": substrate_var.get()
+    }
+    with open("user_settings.json", "w") as f:
+        json.dump(settings, f)
 
-        self.init_ui()
+settings = load_settings()
 
-    def init_ui(self):
-        self.layer_table = ttk.Treeview(self.frame, columns=("Material", "Thickness (nm)", "Repeats"), show='headings')
-        self.layer_table.heading("Material", text="Material")
-        self.layer_table.heading("Thickness (nm)", text="Thickness (nm)")
-        self.layer_table.heading("Repeats", text="Repeats")
-        self.layer_table.pack(fill=tk.BOTH, expand=True, pady=10)
+# GUI setup
+root = tk.Tk()
+root.title("Layer Stack Configuration")
 
-        input_frame = ttk.Frame(self.frame)
-        input_frame.pack(fill=tk.X, pady=5)
+# Lists to store user-defined DBR and metal layers
+dbr_layers = settings["dbr_layers"]
+metal_layers = settings["metal_layers"]
 
-        ttk.Label(input_frame, text="Material").grid(row=0, column=0, padx=5, pady=5)
-        self.material_entry = ttk.Combobox(input_frame, textvariable=self.material_var, values=self.materials)
-        self.material_entry.grid(row=0, column=1, padx=5, pady=5)
+# DBR Layer Functions
+def add_dbr_layer():
+    thickness = float(dbr_thickness_entry.get())
+    material = dbr_material_var.get()
+    layer = [thickness, "Constant", GaSb_ln if material == "GaSb" else AlAsSb_ln]
+    dbr_layers.append(layer)
+    dbr_layer_list.insert(tk.END, f"{material} - {thickness} nm")
+    save_settings()
 
-        ttk.Label(input_frame, text="Thickness (nm)").grid(row=0, column=2, padx=5, pady=5)
-        self.thickness_entry = ttk.Entry(input_frame, textvariable=self.thickness_var)
-        self.thickness_entry.grid(row=0, column=3, padx=5, pady=5)
+def set_dbr_period():
+    global dbr_stack
+    dbr_stack = int(dbr_period_entry.get()) * dbr_layers
+    messagebox.showinfo("DBR Stack", f"DBR Stack set with {len(dbr_stack)} layers.")
+    save_settings()
 
-        ttk.Label(input_frame, text="Repeats").grid(row=0, column=4, padx=5, pady=5)
-        self.repeat_entry = ttk.Entry(input_frame, textvariable=self.repeat_var)
-        self.repeat_entry.grid(row=0, column=5, padx=5, pady=5)
+def clear_dbr_layers():
+    dbr_layers.clear()
+    dbr_layer_list.delete(0, tk.END)
+    save_settings()
 
-        ttk.Button(input_frame, text="Add Layer", command=self.add_layer).grid(row=0, column=6, padx=5, pady=5)
-        ttk.Button(input_frame, text="Calculate and Plot", command=self.plot_rta).grid(row=0, column=7, padx=5, pady=5)
+# Metal Layer Functions
+def add_metal_layer():
+    thickness = float(metal_thickness_entry.get())
+    metal = metal_material_var.get()
+    layer = [thickness, "Lorentz-Drude", [metal]]
+    metal_layers.append(layer)
+    metal_layer_list.insert(tk.END, f"{metal} - {thickness} nm")
+    save_settings()
 
-    def add_layer(self):
-        material = self.material_var.get()
-        thickness = self.thickness_var.get()
-        repeats = self.repeat_var.get()
+def clear_metal_layers():
+    metal_layers.clear()
+    metal_layer_list.delete(0, tk.END)
+    save_settings()
 
-        if material and thickness and repeats:
-            self.layer_list.append((material, float(thickness), int(repeats)))
-            self.layer_table.insert('', 'end', values=(material, thickness, repeats))
-            self.material_var.set('')
-            self.thickness_var.set('')
-            self.repeat_var.set('')
-        else:
-            messagebox.showwarning("Input Error", "Please provide all details for the layer.")
+# Plot Function
+def plot_stack():
+    global substrate_layer
+    substrate_material = substrate_var.get()
+    substrate_layer = [[np.nan, "Constant", GaSb_ln if substrate_material == "GaSb" else GaAs_ln]]
+    Ls_structure = [[np.nan, "Constant", [1.0, 0.0]]] + metal_layers + [[239., "Constant", AlAsSb_ln]]+ dbr_stack + substrate_layer
+    Ls_structure = Ls_structure[::-1]
 
-    def get_layers(self):
-        return self.layer_list
+    nlamb = 3500
+    x = np.linspace(2.5, 15, nlamb) * 1000
+    incang = 0 * np.pi / 180 * np.ones(x.size) # Incident angle (normal incidence)
 
-    def plot_rta(self):
-        layers = self.get_layers()
-        if not layers:
-            messagebox.showwarning("Input Error", "Please add at least one layer.")
-            return
+    rs, rp, Ts, Tp = MF.calc_rsrpTsTp(incang, Ls_structure, x)
+    R0 = (abs(rs))**2
+    T0 = np.real(Ts)
+    Abs1 = 1.0 - R0 - T0
 
-        # Convert layer list to required format for calculation
-        structure = self.build_structure(layers)
+    fig, ax1 = plt.subplots(figsize=(10, 5))
+    ax1.plot(x / 1000, R0, label='Reflectance')
+    ax1.set_xlabel('Wavelength (μm)', size=12)
+    ax1.set_ylabel('Reflectance', size=12)
+    ax1.set_title('Reflectance of Custom Layer Stack', size=16)
+    ax1.legend()
+    ax1.grid(alpha=0.2)
+    plt.tight_layout()
+    plt.show()
+    save_settings()
 
-        # Define wavelength range
-        nlamb = 301
-        x_microns = np.linspace(0, 15, nlamb)  # from 0 to 15 microns
-        x = x_microns * 1e3  # convert to nm for calculations
+# Layout
+tk.Label(root, text="Define DBR Layers").grid(row=0, column=0, columnspan=3)
+dbr_material_var = tk.StringVar(value="GaSb")
+dbr_material_menu = ttk.Combobox(root, textvariable=dbr_material_var, values=["GaSb", "AlAsSb"])
+dbr_material_menu.grid(row=1, column=0)
+tk.Label(root, text="Thickness (nm):").grid(row=1, column=1)
+dbr_thickness_entry = tk.Entry(root)
+dbr_thickness_entry.grid(row=1, column=2)
+add_dbr_btn = tk.Button(root, text="Add DBR Layer", command=add_dbr_layer)
+add_dbr_btn.grid(row=2, column=0, columnspan=3)
+tk.Label(root, text="Number of Periods:").grid(row=3, column=0)
+dbr_period_entry = tk.Entry(root)
+dbr_period_entry.insert(0, settings["dbr_period"])
+dbr_period_entry.grid(row=3, column=1, columnspan=2)
+dbr_period_btn = tk.Button(root, text="Set DBR Period", command=set_dbr_period)
+dbr_period_btn.grid(row=4, column=0, columnspan=3)
+clear_dbr_btn = tk.Button(root, text="Clear DBR Layers", command=clear_dbr_layers)
+clear_dbr_btn.grid(row=5, column=0, columnspan=3)
+dbr_layer_list = tk.Listbox(root, height=5)
+dbr_layer_list.grid(row=6, column=0, columnspan=3)
 
-        # Define incidence angle (in radians)
-        incang = 10 * np.pi / 180 * np.ones(x.size)
+tk.Label(root, text="Define Metal Layers").grid(row=7, column=0, columnspan=3)
+metal_material_var = tk.StringVar(value="Au")
+metal_material_menu = ttk.Combobox(root, textvariable=metal_material_var, values=["Ag", "Al", "Au", "Cu", "Cr", "Ni", "W", "Ti", "Be", "Pd", "Pt"])
+metal_material_menu.grid(row=8, column=0)
+tk.Label(root, text="Thickness (nm):").grid(row=8, column=1)
+metal_thickness_entry = tk.Entry(root)
+metal_thickness_entry.grid(row=8, column=2)
+add_metal_btn = tk.Button(root, text="Add Metal Layer", command=add_metal_layer)
+add_metal_btn.grid(row=9, column=0, columnspan=3)
+clear_metal_btn = tk.Button(root, text="Clear Metal Layers", command=clear_metal_layers)
+clear_metal_btn.grid(row=10, column=0, columnspan=3)
+metal_layer_list = tk.Listbox(root, height=5)
+metal_layer_list.grid(row=11, column=0, columnspan=3)
 
-        # Calculate RTA
-        rs, rp, Ts, Tp = calc_rsrpTsTp(incang, structure, x)
-        Rs = np.abs(rs) ** 2
-        Rp = np.abs(rp) ** 2
-        As = 1 - Rs - Ts  # Absorption for s-polarization
-        Ap = 1 - Rp - Tp  # Absorption for p-polarization
+tk.Label(root, text="Select Substrate").grid(row=12, column=0, columnspan=3)
+substrate_var = tk.StringVar(value=settings["substrate"])
+substrate_menu = ttk.Combobox(root, textvariable=substrate_var, values=["GaSb", "GaAs"])
+substrate_menu.grid(row=13, column=0, columnspan=3)
 
-        self.plot_results(x_microns, Rs, Rp, Ts, Tp, As, Ap)
+plot_btn = tk.Button(root, text="Plot Reflectance", command=plot_stack)
+plot_btn.grid(row=14, column=0, columnspan=3)
 
-    def build_structure(self, layers):
-        structure = [[np.nan, 'Constant', [1.0, 0.0]]]  # Air at the start
-        for material, thickness, repeats in layers:
-            for _ in range(repeats):
-                if material in self.materials:
-                    ld_material = LD(np.array([400, 800]) * 1e-9, material, model='D')  # Example wavelengths
-                    n = ld_material.n[0]
-                    k = ld_material.k[0]
-                    structure.append([thickness, 'Drude', [n**2 - k**2, 2 * n * k, 1.34e13]])  # Example parameters
-                else:
-                    messagebox.showwarning("Material Error", f"Material {material} not recognized. Defaulting to 1+0j.")
-                    structure.append([thickness, 'Constant', [1.0, 0.0]])
-        structure.append([np.nan, 'Constant', [1.0, 0.0]])  # Air at the end
-        return structure
-
-    def plot_results(self, x_microns, Rs, Rp, Ts, Tp, As, Ap):
-        plt.figure()
-        plt.plot(x_microns, Rs, 'k', label='Reflectance - s-pol')
-        plt.plot(x_microns, Rp, 'r', label='Reflectance - p-pol')
-        plt.plot(x_microns, Ts, 'k', label='Transmittance - s-pol')
-        plt.plot(x_microns, Tp, 'r', label='Transmittance - p-pol')
-        plt.plot(x_microns, As, 'k', label='Absorbance - s-pol')
-        plt.plot(x_microns, Ap, 'r', label='Absorbance - p-pol')
-        plt.xlabel('Wavelength (microns)')
-        plt.ylabel('Reflectance Coefficient')
-        plt.title('RTA vs Wavelength')
-        plt.legend()
-        plt.show()
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    root.title("Layer Structure Input")
-    LayerInput(root)
-    root.mainloop()
+root.mainloop()

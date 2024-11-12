@@ -22,11 +22,9 @@ AlAsSb_sn = [8.82, 0.79, 589e-9]   # Journal of Applied Physics 94, 5041 (2003);
 
 # Layer definitions: [thickness (nm), type of formula, [parameters for formula]]
 L_amb = [[nan, "Constant", [1., 0.]]]
-L_Au = [[100, "Constant", [0.55, 20.43]]]  # Gold layer
-L_Ti = [[20, "Constant", [4.56, 5.96]]]    # Titanium layer
 L_Au_LD = [[100, "Lorentz-Drude", ['Au']]]  # Lorentz-Drude model for Au
 L_Ti_LD = [[100, "Lorentz-Drude", ['Ti']]]  # Lorentz-Drude model for Ti
-L_Pt_LD = [[100, "Lorentz-Drude", ['Ti']]]  # Lorentz-Drude model for Pt
+L_Pt_LD = [[100, "Lorentz-Drude", ['Pt']]]  # Lorentz-Drude model for Pt
 
 # Define a 12-period DBR stack of alternating GaSb and AlAsSb layers
 L_1262_cav = 12 * [[201., "Constant", GaSb_ln], [239., "Constant", AlAsSb_ln]]
