@@ -48,7 +48,6 @@ x = linspace(2.5, 15, nlamb) * 1000  # Wavelength range for calculation in nm (2
 
 incang = 0 * pi / 180 * ones(x.size)  # Incident angle (normal incidence)
 
-# Calculate reflectance for the original stack
 [rs, rp, Ts, Tp] = MF.calc_rsrpTsTp(incang, Ls_1262_metal, x)
 R0 = (abs(rs))**2
 R_1 = 0.33 + 0.67 * R0
